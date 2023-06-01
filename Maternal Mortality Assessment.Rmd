@@ -1,0 +1,433 @@
+---
+title: "Maternal Mortality Analysis"
+author: "Tumi, Juhi, Sujay & Yelena"
+date: "2022-11-21"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning = FALSE,
+                      error = TRUE, fig.height = 4)
+library(tidyverse)
+library(lubridate)
+library(broman)
+```
+
+## Introduction:
+
+> According to WHO, maternal mortality is the death of a woman either while pregnant or within 42 days of the pregnancy. Although the rate of this unfortunate occurence has declined over the years, it still claims the lives of about 300,000 women every year. The leading causes of maternal mortality include infections, high blood pressure and complications from delivery (WHO) but there are many other health and non-health related factors that contribute to maternal mortality such as inadequate and poor quality services, cultural beliefs and practices, poverty, lack of information etc. There are important health factors such as age, blood pressure, body weight and others that influence the health of a childbearing woman and can be used to predict and prevent maternal mortality. We are curious to know which of the most important health factors contributes the most to the risk level of a pregnant woman
+
+
+
+## Background
+
+>For this project, we used a dataset collected by Marzia Ahmed (a software engineer lecturer at Daffodil International University) from different hospitals, community clinics and maternal health care centers from the rural areas of Bangladesh through the Internet of Things (IoT) based risk monitoring system. In Bangaladesh approximately 7,660 women die each year from preventable causes related to pregnancy and childbirth. These deaths can be associated with the shortage of skilled birth workers in the rural areas, the 71% of home births and the fact that 52% of girls are married by their 18th birthday, and 18% by the age of 15 (Girls Not Brides 2017). Our population is pregnant women in Bangaladesh and our sample are the women whose information have been collected in this dataset.
+
+>The dataset contains six health factors associated with maternal mortality for 1014 women with assigned risk levels ranging from low risk to medium risk to high risk. The collectors of this data defined risk level as the preficted risk intensity level during pregnancy.
+The health factors include:
+
+- DiastolicBP: Lower value of Blood Pressure in mmHg.
+- SystolicBP: Upper value of Blood Pressure in mmHg.
+- Age: The ages in years of a woman during pregnancy.
+- Blood Sugar: Blood glucose levels is in terms of a molar concentration, mmol/L.
+- Body Temperature: The body temperature in fahrenheit of the sample
+- HeartRate: The normal resting heart rate in beats per minute.
+
+
+>Since we are more focused on the factors that'll lead to a woman being considered as high risk, we decided to merge the columns low risk and medium risk to become 'not high risk'.  
+
+
+## Analysis
+
+### Diastolic Blood Pressure
+
+> The first factor we decided to analyze is Diastolic Blood Pressure. We were looking to see how much of a factor Diastolic Blood Pressure is in relation to Maternal Mortality.  
+> Below is a table that shows the mean, standard deviation and sample population of the factor.
+
+```{r echo = FALSE}
+health = read_csv("Maternal_Health_Risk_Data_Set.csv") %>% mutate(RiskLevel = case_when(RiskLevel  == "high risk" ~ "high risk",
+    TRUE ~ "not high risk"))
+health_dbp= health %>% 
+  group_by(RiskLevel) %>% 
+  summarize(n = n(),
+            mean = mean(DiastolicBP),
+            sd = sd(DiastolicBP))
+health_dbp
+```
+
+>We can see this relationship displayed in a bar plot below.
+
+```{r echo = FALSE}
+ggplot(health_dbp, aes(x = RiskLevel, y = mean, fill = RiskLevel)) +
+  geom_col() +
+  xlab("Risk Level") +
+  ylab("Diastolic BP per Risk Level") +
+  ggtitle("Relationship between Average Diastolic BP and Risk Level" ) 
+```
+
+> Using a t-test, we are 95% confident that the Diastolic BP is about 9.9mmHg to 13.7mmHg higher in a high risk individual than a low risk individual. 
+There is also very strong evidence that the mean of Diastolic Blood Pressure for people considered as high risk is larger than those not considered as high risk.
+This shows that, as assumed, there is a correlation between high risk level and high Diastolic Blood Pressure.
+> The t-test also shows us that with a pvalue of 2.200e-16, there is evidence to show that the true difference in the means of high risk individuals and low risk individuals is not 0. 
+
+```{r echo = FALSE}
+x = health %>% 
+  filter(RiskLevel == "high risk") %>% 
+  pull(DiastolicBP)
+
+y = health %>% 
+  filter(RiskLevel == "not high risk") %>% 
+  pull(DiastolicBP)
+
+t.test(x, y)
+```
+
+> The Boxplot below shows the differences in mean and concentration of the different Risk Levels with the mean of high risk being 85.1mmHg and the mean of not high risk being 73.3mmHg. Although, there are a couple of outliers. 
+
+```{r echo = FALSE}
+ggplot(health, aes(x = RiskLevel, y = DiastolicBP, fill = RiskLevel)) +
+  geom_boxplot(coef = Inf) +
+  geom_point(position = position_jitter(width=0.3, height=0)) +
+  xlab("Risk Level") +
+  ylab("Diastolic Blood Pressure") +
+  ggtitle("Risk Level of a pregnant woman compared to Diastolic Blood Pressure") +
+  theme_minimal()
+```
+
+> We decided to check the proportion of individuals that are considered not high risk but have a Diastolic BP above the average high risk Diastolic BP.
+
+```{r echo=FALSE}
+avg_dbp = health %>% filter(DiastolicBP >= 85.1) %>% group_by(RiskLevel) %>% summarize(count = n())
+total = sum(avg_dbp$count)
+prob_dbp = avg_dbp$count[2] / sum(avg_dbp$count)
+prob_dbp
+```
+
+> For Diastolic BP, the proportion is almost a half meaning that about 45% of the individuals with Diastolic Blood pressure higher then the high risk average diastolic blood pressure are not considered as high risk.
+
+
+### Systolic Blood Pressure
+
+>The next factor is Systolic Blood Pressure. 
+> Below, we can see the sample population, mean and standard deviation of this factor
+
+```{r echo = FALSE}
+health_sbp = health %>% 
+  group_by(RiskLevel) %>% 
+  summarize(n = n(),
+            mean = mean(SystolicBP),
+            sd = sd(SystolicBP))
+health_sbp
+```
+
+>We can see this relationship displayed in a bar plot below.
+
+```{r echo = FALSE}
+ggplot(health_sbp, aes(x = RiskLevel, y = mean, fill = RiskLevel)) +
+  geom_col() +
+  xlab("Risk Level") +
+  ylab("Systolic BP per Risk Level") +
+  ggtitle("Relationship between Average Systolic BP and Risk Level" ) 
+```
+
+> Using a t-test, we are 95% confident that the Systolic BP is about 12.4mmHg to 17.7mmHg higher in a high risk individual than a not high risk individual. This also shows a positive relationship between risk level and systolic blood pressure.
+> Just like in Diastolic Bp, this t-test shows us that with a pvalue of 2.200e-16, there is evidence to show that the true difference in the means of high risk individuals and low risk individuals is not 0. 
+
+
+```{r echo = FALSE}
+x = health %>% 
+  filter(RiskLevel == "high risk") %>% 
+  pull(SystolicBP)
+
+y = health %>% 
+  filter(RiskLevel == "not high risk") %>% 
+  pull(SystolicBP)
+
+t.test(x, y)
+```
+
+>Below, we created a boxplot that shows the differences in mean (124mmHg in high risk and 109mmHg in not high risk) and concentration of the different Risk Levels. 
+
+```{r echo = FALSE}
+ggplot(health, aes(x = RiskLevel, y = SystolicBP, fill = RiskLevel)) +
+  geom_boxplot(coef = Inf) +
+  geom_point(position = position_jitter(width=0.3, height=0)) +
+  xlab("Risk Level") +
+  ylab("Systolic BP") +
+  ggtitle("Risk Level of pregnancy compared to Systolic") +
+  theme_minimal()
+```
+
+> The proportion of individuals that are considered not high risk but have a Systolic BP above the average high risk Systolic BP is shown below.
+
+```{r echo=FALSE}
+avg_sbp = health %>% filter(SystolicBP >= 124) %>% group_by(RiskLevel) %>% summarize(count = n())
+total = sum(avg_sbp$count)
+prob_sbp = avg_sbp$count[2] / sum(avg_sbp$count)
+prob_sbp
+```
+
+> For Systolic BP, the proportion is almost a half meaning that about 28% of the individuals with Systolic Blood pressure higher then the high risk average Systolic blood pressure are not considered as high risk. This is a lower percentage than Diastolic BP.
+
+
+### Age
+
+>The next factor we looked at is Age. Below, we have the bar graph showing the mean and the table showing the mean and standard deviation and total individuals in each risk level category.
+
+```{r echo = FALSE}
+health_age = health %>% 
+  group_by(RiskLevel) %>% 
+  summarize(n = n(),
+            mean = mean(Age),
+            sd = sd(Age))
+health_age
+
+ggplot(health_age, aes(x = RiskLevel, y = mean, fill = RiskLevel)) +
+  geom_col() +
+  xlab("Risk Level") +
+  ylab("Age per Risk Level") +
+  ggtitle("Average Age and its pertinence to Risk Level" ) 
+```
+
+>Using a t-test, we are 95% confident that the Age is about 6.9 years to 10.5 years higher in a high risk individual than a low risk individual. There is also very strong evidence that there is a positive relationship between Age and Risk level. 
+>This t-test gives us similar results as the former two factors. The pvalue of 2.200e-16 shows that there is evidence to show that the true difference in the means of high risk individuals and low risk individuals is not 0. 
+
+
+```{r echo = FALSE}
+x = health %>% 
+  filter(RiskLevel == "high risk") %>% 
+  pull(Age)
+
+y = health %>% 
+  filter(RiskLevel == "not high risk") %>% 
+  pull(Age)
+
+t.test(x, y)
+```
+
+>Below, we created a boxplot that shows the differences in mean (36.2 years in high risk and 27.5 years in not high risk) and concentration of the different Risk Levels. The Boxplot below displays the majority of data in a more specific age range. Also displays the outliers not in the data range.
+
+```{r echo = FALSE}
+ggplot(health, aes(x = RiskLevel, y = Age, fill = RiskLevel)) +
+  geom_boxplot(coef = Inf) +
+  geom_point(position = position_jitter(width=0.3, height=0)) +
+  xlab("Risk Level") +
+  ylab("Age") +
+  ggtitle("Risk Level of pregnancy in relationship with Age") +
+  theme_minimal()
+```
+
+> The proportion of individuals that are considered not high risk but have an Age above the average high risk Age is shown below.
+
+```{r echo=FALSE}
+avg_age = health %>% filter(Age >= 36.2) %>% group_by(RiskLevel) %>% summarize(count = n())
+total = sum(avg_age$count)
+prob_age = avg_age$count[2] / sum(avg_age$count)
+prob_age
+```
+
+> This proportion is about 51% and is higher than the former two proportions. 
+
+### Blood Sugar
+
+>For our next factor, we'll be examining Blood Sugar. We have the mean and standard deviation table below and the graph representing the mean.
+
+```{r echo = FALSE}
+health_bs = health %>% 
+  group_by(RiskLevel) %>% 
+  summarize(n = n(),
+            mean = mean(BS),
+            sd = sd(BS))
+health_bs
+
+ggplot(health_bs, aes(x = RiskLevel, y = mean, fill = RiskLevel)) +
+  geom_col() +
+  xlab("Risk Level") +
+  ylab("Blood Sugar per Risk Level") +
+  ggtitle("Average Blood Sugar and its pertinence to Risk Level" ) 
+```
+
+>Using a t-test, we are 95% confident that the Blood Sugar is about 4.1 mmol/L to 5.2 mmol/L higher in a high risk individual than a low risk individual. There is also very strong evidence that there is a positive relationship between Blood Sugar and Risk level. 
+>This t-test also shows us that with a pvalue of 2.200e-16, there is evidence to show that the true difference in the means of high risk individuals and low risk individuals is not 0. 
+
+
+```{r echo=FALSE}
+x = health %>% 
+  filter(RiskLevel == "high risk") %>% 
+  pull(BS)
+
+y = health %>% 
+  filter(RiskLevel == "not high risk") %>% 
+  pull(BS)
+
+t.test(x, y)
+```
+
+>Below, we created a boxplot that shows the differences in mean (12.1 mmol/L in high risk and 7.48 mmol/L in not high risk) and concentration of the different Risk Levels. This box plot shows the huge variation in upper and lower quantiles of the different levels with not high risk having a smaller area compared to high risk.
+
+```{r echo = FALSE}
+ggplot(health, aes(x = RiskLevel, y = BS, fill = RiskLevel)) +
+  geom_boxplot(coef = Inf) +
+  geom_point(position = position_jitter(width=0.3, height=0)) +
+  xlab("Risk Level") +
+  ylab("Blood Sugar") +
+  ggtitle("Risk Level of pregnancy in relationship with Blood Sugar") +
+  theme_minimal()
+```
+
+> Below, we are displaying the proportion of individuals that are considered not high risk but have a blood sugar rate above the average high risk blood sugar rate. 
+
+```{r echo=FALSE}
+avg_bs = health %>% filter(BS >= 12.1) %>% group_by(RiskLevel) %>% summarize(count = n())
+total = sum(avg_bs$count)
+prob_bs = avg_bs$count[2] / sum(avg_bs$count)
+prob_bs
+```
+
+> This proportion is about 13% and is the lowest we've seen so far.
+
+### Body Temperature
+
+>For the next factor, we'll be examining Body Temperature. Below, we have the bar graph showing the mean and the table showing the mean and standard deviation and total individuals in each risk level category.
+
+```{r echo = FALSE}
+health_bt = health %>% 
+  group_by(RiskLevel) %>% 
+  summarize(n = n(),
+            mean = mean(BodyTemp),
+            sd = sd(BodyTemp))
+health_bt
+
+ggplot(health1, aes(x = RiskLevel, y = mean, fill = RiskLevel)) +
+  geom_col() +
+  xlab("Risk Level") +
+  ylab("Body Temperature per Risk Level") +
+  ggtitle("Average Body Temperature and its pertinence to Risk Level" ) 
+```
+> These averages are almost equal so we have a hunch that body temperature would not be a major factor influencing the risk level. 
+
+
+>Using a t-test, we are 95% confident that the body temperature is about 0.1 to 0.5 degrees fahrenheit higher in a high risk individual than a low risk individual. We believe that there isn't a strong correlation between the two factors but it does seem a bit positive. 
+This t-test provides us with a different pvalue that the other factors. The pvalue of 0.002608 shows there is evidence to show that the true difference in the means of high risk individuals and low risk individuals is not 0. 
+
+
+```{r echo= FALSE}
+x = health %>% 
+  filter(RiskLevel == "high risk") %>% 
+  pull(BodyTemp)
+
+y = health %>% 
+  filter(RiskLevel == "not high risk") %>% 
+  pull(BodyTemp)
+
+t.test(x, y)
+```
+
+>Below, we attempted to create a boxplot that shows the differences in mean (98.9 degrees fahrenheit in high risk and 98.6 degrees fahrenheit in not high risk) and concentration of the different Risk Levels. 
+
+```{r echo = FALSE}
+ggplot(health, aes(x = RiskLevel, y = BodyTemp, fill = RiskLevel)) +
+  geom_boxplot(coef = Inf) +
+  geom_point(position = position_jitter(width=0.3, height=0)) +
+  xlab("Risk Level") +
+  ylab("Body Temperature") +
+  ggtitle("Risk Level of pregnancy in relationship with Body Temperature") +
+  theme_minimal()
+```
+
+>The boxplot did not show because there was not a big variance in our data meaning that there were no whiskers not outliers so the box was flattened. Because of this, we will eliminate body temperature from our possible causing factors of risk level and move on to the last factor. 
+
+### Heart Rate
+
+>The last factor we'll be looking at is the Heart rate.
+
+```{r echo = FALSE}
+health_hr= health %>% 
+  group_by(RiskLevel) %>% 
+  summarize(n = n(),
+            mean = mean(HeartRate),
+            sd = sd(HeartRate))
+health_hr
+```
+
+>Below, we have simple bar graph displaying the Average Heart Rate in correlation to the different risks
+
+```{r echo = FALSE}
+ggplot(health_hr, aes(x = RiskLevel, y = mean, fill = RiskLevel)) +
+  geom_col() +
+  xlab("Risk Level") +
+  ylab("Average Heart Rate per Risk Level") +
+  ggtitle("Relationship between Average Heart Rate and Risk Level" ) 
+```
+
+
+> Using a t-test, we are 95% confident that the Heart rate is about 2.1 beats/second to 4.5 beats/second higher in a high risk individual than a low risk individual. This shows that there may be a positive relationship between heart rate and risk level.
+>This t-test provides us with a different pvalue that the other factors. The pvalue of 4.242e-08 shows there is evidence to show that the true difference in the means of high risk individuals and low risk individuals is not 0. 
+
+
+```{r echo = FALSE}
+x = health %>% 
+  filter(RiskLevel == "high risk") %>% 
+  pull(HeartRate)
+
+y = health %>% 
+  filter(RiskLevel == "not high risk") %>% 
+  pull(HeartRate)
+
+t.test(x, y)
+```
+
+
+>>The Boxplot below shows the heart rate distribution of the different Risk Levels and the differences in means (76.7 beats/second in high risk and 73.4 beats/second in not high risk) of the risk levels. The means are close but the high risk sample has a higher range then the not high risk sample.
+
+```{r echo = FALSE}
+ggplot(health, aes(x = RiskLevel, y = HeartRate, fill = RiskLevel)) +
+  geom_boxplot(coef = Inf) +
+  geom_point(position = position_jitter(width=0.3, height=0)) +
+   ggtitle("Heart Rate vs Risk Level") +
+  xlab("Risk Level") +
+  ylab("Heart Rate") +
+  theme_minimal()
+```
+
+> Below, we are displaying the proportion of individuals that are considered not high risk but have a heart rate above the average high risk heart rate. 
+
+```{r echo=FALSE}
+avg_hr = health %>% filter(HeartRate >= 76.7) %>% group_by(RiskLevel) %>% summarize(count = n())
+total = sum(avg_hr$count)
+prob_hr = avg_hr$count[2] / sum(avg_hr$count)
+prob_hr
+```
+
+> This proportion is about 63% and is the highest out of all the samples we've examined.
+
+### Summary
+
+```{r echo=FALSE}
+factors = c("Diastolic BP", "Systolic BP", "Age", "Blood Sugar", "Body Temperature", "Heart Rate")
+high_risk_mean = c(health_dbp$mean[1],health_sbp$mean[1],health_age$mean[1],health_bs$mean[1],health_bt$mean[1],health_hr$mean[1])
+high_risk_mean = round(high_risk_mean, 2)
+not_high_risk_mean = c(health_dbp$mean[2],health_sbp$mean[2],health_age$mean[2],health_bs$mean[2],health_bt$mean[2],health_hr$mean[2])
+not_high_risk_mean = round(not_high_risk_mean, 2)
+proportion = c(round(prob_dbp, 4), round(prob_sbp, 4),round(prob_age, 4), round(prob_bs, 4),"N/A", round(prob_hr, 4))
+p_value = c(2.2e-16, 2.2e-16, 2.2e-16, 2.2e-16, 0.002608, 4.242e-08)
+
+data.frame(factors, high_risk_mean, not_high_risk_mean, proportion, p_value)
+```
+
+## Discussion
+
+>We started our analysis with assuming that all factors discussed directly affect the risk level of an individual. Eventually, we decided to eliminate body temperature because of the lack of variance in the different risk levels. One of the major obstacles we faced was deciding how to assess the correlation of these factors. The nature of the data is not exactly scattered and doesn't look random on a scatter plot. Because of this, it's impossible to use regression to predict risk level and it's difficult to draw a continuous pattern through this data. Also, there is a limitation on who we can use this analysis and prediction to assess since the sample of this data is women in Bangladesh. 
+
+>The main methods we used to decide which factor has the highest influence on the risk level were the t-test (specifically the mean test) and comparing the proportions. Both of these mehtods are not able to specifically tell us which factor contributes the most to the risk level, but they helped us to narrow it down. Using the t-test also came with a drawback since most of the factors had equal p-values of 2.200e-16.
+
+>While comparing the proportions, we observed that the factor with the lowest proportions of outlying low risk individuals is blood sugar and following closely behind is Systolic BP. Using the t-test didn't give us a detailed result but it did let us know that the statistical means of the risk levels for each factor were not equal to 0 .
+
+>We acknowledge that further research, a more diverse dataset and more detailed methods would be useful in making more accurate predictions of the most determining factor of risk level.
+
+#These are my jottings:
+
+#"#As a group we tested for all variables against the three different levels of risk except for Diastolic Blood Pressure. Results show the levels of these certain factors in both the majority and outlying aspects. An idea for further analysis would be to test the CI in our conclusions for all of these aspects in addition to the preliminary results." This was previously in the background, should we add it still?
+
+
+
