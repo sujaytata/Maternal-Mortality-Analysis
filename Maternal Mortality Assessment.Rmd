@@ -427,7 +427,7 @@ data.frame(factors, high_risk_mean, not_high_risk_mean, proportion, p_value)
 
 #These are my jottings:
 
-#"#As a group we tested for all variables against the three different levels of risk except for Diastolic Blood Pressure. Results show the levels of these certain factors in both the majority and outlying aspects. An idea for further analysis would be to test the CI in our conclusions for all of these aspects in addition to the preliminary results." This was previously in the background, should we add it still?
+#"#As a group we tested for all variables against the three different levels of risk except for Diastolic Blood Pressure. Results show the levels of these certain factors in both the majority and outlying aspects. An idea for further analysis would be to test the CI in our conclusions for all of these aspects in addition to the preliminary results." 
 
 
 
